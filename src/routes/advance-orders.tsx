@@ -66,8 +66,8 @@ interface DraftItem {
   notes: string;
 }
 
-function emptyDraftItem(): DraftItem {
-  return { category: "Breakfast", item_name: "", quantity: 1, unit: "Plate", price_per_unit: 0, notes: "" };
+function emptyDraftItem(category: string = "Breakfast"): DraftItem {
+  return { category, item_name: "", quantity: 1, unit: "Plate", price_per_unit: 0, notes: "" };
 }
 
 async function fetchOrders(): Promise<AdvanceOrder[]> {
@@ -412,22 +412,33 @@ function OrderCard({ order, onEdit, onStatus }: { order: AdvanceOrder; onEdit: (
       {order.address && <div className="text-xs text-muted-foreground line-clamp-2">{order.address}</div>}
       
       {items.length > 0 && (
-        <div className="bg-muted/30 rounded-lg p-2.5 space-y-1.5 border border-muted">
-          <div className="text-xs font-semibold text-muted-foreground uppercase">Items</div>
-          <div className="space-y-1">
-            {items.map((item) => (
-              <div key={item.id} className="text-xs flex items-center justify-between gap-2">
-                <div className="min-w-0 flex-1">
-                  <div className="truncate font-medium">{item.item_name}</div>
-                  <div className="text-muted-foreground text-[0.7rem]">{item.category}</div>
-                </div>
-                <div className="text-right whitespace-nowrap">
-                  <div className="font-semibold">{item.quantity} {item.unit}</div>
-                  <div className="text-muted-foreground text-[0.7rem]">{formatINR(item.total_amount)}</div>
+        <div className="space-y-2">
+          {(() => {
+            const categorized = new Map<string, AdvanceOrderItem[]>();
+            items.forEach((item) => {
+              if (!categorized.has(item.category)) categorized.set(item.category, []);
+              categorized.get(item.category)!.push(item);
+            });
+            
+            return Array.from(categorized.entries()).map(([category, categoryItems]) => (
+              <div key={category} className="bg-muted/30 rounded-lg p-2.5 border border-muted">
+                <div className="text-xs font-semibold text-primary mb-1.5">{category}</div>
+                <div className="space-y-1">
+                  {categoryItems.map((item) => (
+                    <div key={item.id} className="text-xs flex items-center justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate font-medium">{item.item_name}</div>
+                      </div>
+                      <div className="text-right whitespace-nowrap">
+                        <div className="font-semibold">{item.quantity} {item.unit}</div>
+                        <div className="text-muted-foreground text-[0.7rem]">{formatINR(item.total_amount)}</div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
-            ))}
-          </div>
+            ));
+          })()}
         </div>
       )}
       
@@ -531,12 +542,12 @@ function OrderDialog({ open, onOpenChange, editing, onSaved }: { open: boolean; 
         setItems(rows.length ? rows.map((r) => ({
           id: r.id, category: r.category, item_name: r.item_name, quantity: Number(r.quantity),
           unit: r.unit, price_per_unit: Number(r.price_per_unit), notes: r.notes ?? "",
-        })) : [emptyDraftItem()]);
+        })) : [emptyDraftItem("Breakfast")]);
       });
     } else {
       setCustomer(""); setMobile(""); setEventType(""); setDate(""); setTime("");
       setAddress(""); setNotes(""); setStatus("pending"); setAdvance(0);
-      setItems([emptyDraftItem()]);
+      setItems([emptyDraftItem("Breakfast")]);
     }
   }, [open, editing]);
 
@@ -644,60 +655,132 @@ function OrderDialog({ open, onOpenChange, editing, onSaved }: { open: boolean; 
             <div className="space-y-1.5 sm:col-span-2"><Label>Notes</Label><Textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} /></div>
           </section>
 
-          <section className="space-y-2">
+          <section className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold">Order Items</h3>
-              <Button size="sm" variant="outline" onClick={addRow} className="gap-1"><Plus className="h-3.5 w-3.5" /> Add Item</Button>
+              <h3 className="font-semibold">Order Items by Category</h3>
             </div>
-            <div className="space-y-2">
-              {items.map((it, i) => {
-                const total = Number(it.quantity || 0) * Number(it.price_per_unit || 0);
-                return (
-                  <div key={i} className="border rounded-xl p-3 bg-muted/30 space-y-2">
-                    <div className="grid grid-cols-2 sm:grid-cols-12 gap-2">
-                      <div className="sm:col-span-3">
-                        <Label className="text-xs">Category</Label>
-                        <Select value={it.category} onValueChange={(v) => updateItem(i, { category: v })}>
-                          <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-                          <SelectContent>{CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
-                        </Select>
-                      </div>
-                      <div className="col-span-2 sm:col-span-4">
-                        <Label className="text-xs">Item Name</Label>
-                        <Input value={it.item_name} onChange={(e) => updateItem(i, { item_name: e.target.value })} placeholder="Idly, Dosa…" />
-                      </div>
-                      <div className="sm:col-span-2">
-                        <Label className="text-xs">Qty</Label>
-                        <Input type="number" min={0} value={it.quantity} onChange={(e) => updateItem(i, { quantity: Number(e.target.value) })} />
-                      </div>
-                      <div className="sm:col-span-2">
-                        <Label className="text-xs">Unit</Label>
-                        <Select value={it.unit} onValueChange={(v) => updateItem(i, { unit: v })}>
-                          <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-                          <SelectContent>{UNITS.map((u) => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent>
-                        </Select>
-                      </div>
-                      <div className="sm:col-span-1 flex sm:block items-end justify-end">
-                        <Button size="icon" variant="ghost" onClick={() => removeRow(i)} aria-label="Remove" disabled={items.length === 1}>
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
-                      <div className="sm:col-span-4">
-                        <Label className="text-xs">Price / Unit</Label>
-                        <Input type="number" min={0} value={it.price_per_unit} onChange={(e) => updateItem(i, { price_per_unit: Number(e.target.value) })} />
-                      </div>
-                      <div className="sm:col-span-4">
-                        <Label className="text-xs">Item Notes</Label>
-                        <Input value={it.notes} onChange={(e) => updateItem(i, { notes: e.target.value })} />
-                      </div>
-                      <div className="sm:col-span-4">
-                        <Label className="text-xs">Total</Label>
-                        <div className="h-9 px-3 flex items-center font-semibold bg-background rounded-md border">{formatINR(total)}</div>
-                      </div>
-                    </div>
+
+            {/* Group items by category */}
+            {(() => {
+              const categorized = new Map<string, DraftItem[]>();
+              items.forEach((item, idx) => {
+                if (!categorized.has(item.category)) categorized.set(item.category, []);
+                const list = categorized.get(item.category)!;
+                list.push({ ...item, _index: idx } as any);
+              });
+
+              return Array.from(categorized.entries()).map(([category, categoryItems]) => (
+                <div key={category} className="border rounded-lg overflow-hidden">
+                  {/* Category Header */}
+                  <div className="bg-primary/10 border-b px-4 py-3 flex items-center justify-between gap-3">
+                    <h4 className="font-semibold text-sm">{category}</h4>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        const newIdx = items.length;
+                        const newItems = [...items, emptyDraftItem(category)];
+                        setItems(newItems);
+                      }}
+                      className="gap-1 h-8"
+                    >
+                      <Plus className="h-3.5 w-3.5" /> Add Item
+                    </Button>
                   </div>
-                );
-              })}
+
+                  {/* Category Items Table */}
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b bg-muted/50">
+                          <th className="text-left px-3 py-2 font-semibold">Item Name</th>
+                          <th className="text-center px-3 py-2 font-semibold w-20">Qty</th>
+                          <th className="text-center px-3 py-2 font-semibold w-24">Unit</th>
+                          <th className="text-right px-3 py-2 font-semibold w-28">Price/Unit</th>
+                          <th className="text-right px-3 py-2 font-semibold w-28">Total</th>
+                          <th className="text-center px-3 py-2 font-semibold w-16">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {categoryItems.map((item: any, idx: number) => {
+                          const actualIdx = item._index;
+                          const total = Number(item.quantity || 0) * Number(item.price_per_unit || 0);
+                          return (
+                            <tr key={actualIdx} className="border-b hover:bg-muted/30 transition-colors">
+                              <td className="px-3 py-2">
+                                <Input
+                                  value={item.item_name}
+                                  onChange={(e) => updateItem(actualIdx, { item_name: e.target.value })}
+                                  placeholder="e.g., Biryani"
+                                  className="h-8 text-sm"
+                                />
+                              </td>
+                              <td className="px-3 py-2 text-center">
+                                <Input
+                                  type="number"
+                                  min={0}
+                                  value={item.quantity}
+                                  onChange={(e) => updateItem(actualIdx, { quantity: Number(e.target.value) })}
+                                  className="h-8 text-sm text-center"
+                                />
+                              </td>
+                              <td className="px-3 py-2">
+                                <Select value={item.unit} onValueChange={(v) => updateItem(actualIdx, { unit: v })}>
+                                  <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                                  <SelectContent>{UNITS.map((u) => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent>
+                                </Select>
+                              </td>
+                              <td className="px-3 py-2 text-right">
+                                <Input
+                                  type="number"
+                                  min={0}
+                                  value={item.price_per_unit}
+                                  onChange={(e) => updateItem(actualIdx, { price_per_unit: Number(e.target.value) })}
+                                  className="h-8 text-sm text-right"
+                                />
+                              </td>
+                              <td className="px-3 py-2 text-right font-semibold">{formatINR(total)}</td>
+                              <td className="px-3 py-2 text-center">
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  onClick={() => removeRow(actualIdx)}
+                                  disabled={items.length === 1}
+                                  className="h-8 w-8"
+                                >
+                                  <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ));
+            })()}
+
+    {/* Add New Category */}
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <Select value="" onValueChange={(category) => {
+                  if (category && !items.some((it) => it.category === category)) {
+                    setItems((p) => [...p, emptyDraftItem(category)]);
+                  }
+                }}>
+                  <SelectTrigger className="">
+                    <SelectValue placeholder="Add new category..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CATEGORIES.filter((c) => !items.some((it) => it.category === c)).map((c) => (
+                      <SelectItem key={c} value={c}>
+                        {c}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </section>
 

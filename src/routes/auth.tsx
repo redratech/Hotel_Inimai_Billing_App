@@ -60,9 +60,7 @@ export default function AuthPage() {
       <div className="w-full max-w-sm bg-card border rounded-2xl p-6 shadow-[var(--shadow-soft)]">
         <div className="text-center mb-2">
           <p className="text-xs text-muted-foreground mb-4">v1.0 · Single Admin Mode</p>
-          <div className="mx-auto h-12 w-12 rounded-xl flex items-center justify-center text-lg font-bold mb-2" style={{ background: "var(--gradient-warm)", color: "oklch(0.2 0.05 35)" }}>
-            HI
-          </div>
+          <img src="/logo.jpeg" alt="Hotel Inimai Logo" className="mx-auto h-12 w-12 rounded-lg object-cover mb-2" />
           <h1 className="text-xl font-bold">Hotel Inimai</h1>
           <p className="text-sm text-muted-foreground">{mode === "login" ? "Sign in to manage your hotel" : "Create the admin account"}</p>
         </div>

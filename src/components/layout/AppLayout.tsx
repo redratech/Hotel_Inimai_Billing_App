@@ -31,7 +31,10 @@ export function AppLayout({ children }: { children: ReactNode }) {
         <button onClick={() => setOpen(true)} aria-label="Open menu" className="p-2 -ml-2">
           <MenuIcon className="h-6 w-6" />
         </button>
-        <div className="font-bold tracking-tight">Hotel Inimai</div>
+        <div className="flex items-center gap-2">
+          <img src="/logo.jpeg" alt="Logo" className="h-8 w-8 rounded-lg object-cover" />
+          <div className="font-bold tracking-tight">Hotel Inimai</div>
+        </div>
         <div className="w-8" />
       </header>
 
@@ -45,9 +48,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
       >
         <div className="h-16 flex items-center justify-between px-5 border-b border-sidebar-border">
           <Link to="/" className="flex items-center gap-2" onClick={() => setOpen(false)}>
-            <div className="h-9 w-9 rounded-xl flex items-center justify-center text-lg font-bold" style={{ background: "var(--gradient-warm)", color: "oklch(0.2 0.05 35)" }}>
-              HI
-            </div>
+            <img src="/logo.jpeg" alt="Hotel Inimai Logo" className="h-9 w-9 rounded-lg object-cover" />
             <div className="leading-tight">
               <div className="font-bold">Hotel Inimai</div>
               <div className="text-xs opacity-70">Billing System</div>
