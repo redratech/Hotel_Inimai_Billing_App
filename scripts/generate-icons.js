@@ -17,8 +17,7 @@ const iconDirs = [
   'android/app/src/main/res/mipmap-hdpi',
   'android/app/src/main/res/mipmap-xhdpi',
   'android/app/src/main/res/mipmap-xxhdpi',
-  'android/app/src/main/res/mipmap-xxxhdpi',
-  'android/app/src/main/res/mipmap-anydpi-v26',
+  'android/app/src/main/res/mipmap-xxxhdpi'
 ];
 
 const sourceLogo = path.join(__dirname, '../public/logo.jpeg');
@@ -39,7 +38,7 @@ try {
   // Copy logo to each icon directory
   iconDirs.forEach(dir => {
     const fullPath = path.join(__dirname, '..', dir);
-    
+
     // Create directory if it doesn't exist
     if (!fs.existsSync(fullPath)) {
       fs.mkdirSync(fullPath, { recursive: true });
@@ -52,8 +51,6 @@ try {
   });
 
   console.log('✨ Icon generation complete!');
-  console.log('Note: For production, use ImageMagick or a similar tool to resize and format icons properly.');
-  console.log('Recommended: convert logo.jpeg -resize 192x192 android/app/src/main/res/mipmap-mdpi/ic_launcher.png');
 
 } catch (error) {
   console.error('❌ Error generating icons:', error.message);
