@@ -1,21 +1,17 @@
 workflows:
-android-workflow:
-name: Android Workflow
-max_build_duration: 60
-
-
-environment:
-  java: 21
-  vars:
-    PACKAGE_NAME: "com.inimai.hotel"
-
-scripts:
-  - npm install
-  - npm run build
-  - npx cap sync android
-  - cd android
-  - chmod +x gradlew
-  - ./gradlew assembleDebug
-
-artifacts:
-  - android/app/build/outputs/**/*.apk
+  android-workflow:
+    name: Android Workflow
+    max_build_duration: 60
+    environment:
+      java: 21
+      vars:
+        PACKAGE_NAME: "com.inimai.hotel"
+    scripts:
+      - npm install
+      - npm run build
+      - npx cap sync android
+      - cd android
+      - chmod +x gradlew
+      - ./gradlew assembleDebug
+    artifacts:
+      - android/app/build/outputs/**/*.apk
