@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Inimai Hotel</string>
+    <string name="title_activity_main">Inimai Hotel</string>
+    <string name="package_name">com.inimai.hotel</string>
+    <string name="custom_url_scheme">com.inimai.hotel</string>
+</resources>
