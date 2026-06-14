@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, UtensilsCrossed, ShoppingBag, Receipt, BarChart3, Menu as MenuIcon, X, LogOut, CalendarClock } from "lucide-react";
+import { LayoutDashboard, UtensilsCrossed, ShoppingBag, Receipt, BarChart3, Menu as MenuIcon, X, LogOut, CalendarClock, Wallet } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
@@ -9,6 +9,7 @@ const NAV = [
   { to: "/", label: "POS / Billing", icon: ShoppingBag },
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/menu", label: "Menu", icon: UtensilsCrossed },
+  { to: "/accounts", label: "Accounts", icon: Wallet },
   { to: "/advance-orders", label: "Advance Orders", icon: CalendarClock },
   { to: "/bills", label: "Bill History", icon: Receipt },
   { to: "/reports", label: "Reports", icon: BarChart3 },

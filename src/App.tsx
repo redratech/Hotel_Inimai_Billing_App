@@ -9,6 +9,8 @@ import BillsPage from "@/routes/bills";
 import ReportsPage from "@/routes/reports";
 import AuthPage from "@/routes/auth";
 import AdvanceOrdersPage from "@/routes/advance-orders";
+import AccountsPage from "@/routes/accounts";
+import AccountHolderDetailPage from "@/routes/account-holder-detail";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 
 function NotFound() {
@@ -40,6 +42,8 @@ function ProtectedApp() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/menu" element={<MenuPage />} />
         <Route path="/advance-orders" element={<AdvanceOrdersPage />} />
+        <Route path="/accounts" element={<AccountsPage />} />
+        <Route path="/accounts/:holderSlug/:holderId" element={<AccountHolderDetailPage />} />
         <Route path="/bills" element={<BillsPage />} />
         <Route path="/reports" element={<ReportsPage />} />
         <Route path="*" element={<NotFound />} />

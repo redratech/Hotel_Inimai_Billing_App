@@ -36,6 +36,36 @@ export interface BillItem {
   subtotal: number;
 }
 
+export interface AccountHolder {
+  id: string;
+  name: string;
+  phone: string | null;
+  description: string | null;
+  created_at: string;
+}
+
+export interface AccountHolderBill {
+  id: string;
+  account_holder_id: string;
+  bill_number: string;
+  total_amount: number;
+  paid_amount: number;
+  balance_amount: number;
+  status: string;
+  payment_method: string | null;
+  created_at: string;
+}
+
+export interface AccountHolderBillItem {
+  id: string;
+  account_holder_bill_id: string;
+  item_id: string | null;
+  item_name: string;
+  quantity: number;
+  price: number;
+  subtotal: number;
+}
+
 export async function fetchItems(): Promise<MenuItem[]> {
   const { data, error } = await supabase
     .from("items")
@@ -90,6 +120,92 @@ export async function fetchAllBillItems(): Promise<BillItem[]> {
   const { data, error } = await supabase.from("bill_items").select("*");
   if (error) throw error;
   return (data ?? []) as BillItem[];
+}
+
+export async function fetchAccountHolders(): Promise<AccountHolder[]> {
+  const { data, error } = await supabase.from("account_holders").select("*").order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as AccountHolder[];
+}
+
+export async function createAccountHolder(input: { name: string; phone: string; description: string }): Promise<AccountHolder> {
+  const { data, error } = await supabase
+    .from("account_holders")
+    .insert({ name: input.name.trim(), phone: input.phone.trim(), description: input.description.trim() || null })
+    .select()
+    .single();
+  if (error) throw error;
+  return data as AccountHolder;
+}
+
+export async function fetchAccountHolderBills(accountHolderId: string): Promise<AccountHolderBill[]> {
+  const { data, error } = await supabase
+    .from("account_holder_bills")
+    .select("*")
+    .eq("account_holder_id", accountHolderId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as AccountHolderBill[];
+}
+
+export async function fetchAllAccountHolderBills(): Promise<AccountHolderBill[]> {
+  const { data, error } = await supabase.from("account_holder_bills").select("*").order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as AccountHolderBill[];
+}
+
+export async function fetchAccountHolderBillItems(accountHolderBillId: string): Promise<AccountHolderBillItem[]> {
+  const { data, error } = await supabase
+    .from("account_holder_bill_items")
+    .select("*")
+    .eq("account_holder_bill_id", accountHolderBillId)
+    .order("id", { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as AccountHolderBillItem[];
+}
+
+export async function createAccountHolderBill(accountHolderId: string, lines: CartLine[]): Promise<AccountHolderBill> {
+  const total = lines.reduce((sum, line) => sum + line.price * line.quantity, 0);
+  const { data: bill, error } = await supabase
+    .from("account_holder_bills")
+    .insert({ account_holder_id: accountHolderId, total_amount: total, paid_amount: 0, balance_amount: total, status: "unpaid" })
+    .select()
+    .single();
+  if (error) throw error;
+
+  const rows = lines.map((line) => ({
+    account_holder_bill_id: bill!.id,
+    item_id: line.item_id,
+    item_name: line.item_name,
+    quantity: line.quantity,
+    price: line.price,
+    subtotal: line.price * line.quantity,
+  }));
+
+  const { error: itemError } = await supabase.from("account_holder_bill_items").insert(rows);
+  if (itemError) throw itemError;
+
+  return bill as AccountHolderBill;
+}
+
+export async function payAccountHolderBill(billId: string, amount: number, paymentMethod: string): Promise<AccountHolderBill> {
+  const { data: bill, error: fetchError } = await supabase.from("account_holder_bills").select("*").eq("id", billId).single();
+  if (fetchError) throw fetchError;
+
+  const currentPaid = Number(bill.paid_amount ?? 0);
+  const total = Number(bill.total_amount ?? 0);
+  const nextPaid = Math.min(total, currentPaid + amount);
+  const nextBalance = Math.max(0, total - nextPaid);
+  const status = nextBalance === 0 ? "paid" : "partially_paid";
+
+  const { data, error } = await supabase
+    .from("account_holder_bills")
+    .update({ paid_amount: nextPaid, balance_amount: nextBalance, status, payment_method: paymentMethod })
+    .eq("id", billId)
+    .select()
+    .single();
+  if (error) throw error;
+  return data as AccountHolderBill;
 }
 
 export interface CartLine {
