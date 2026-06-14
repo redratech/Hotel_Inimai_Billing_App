@@ -635,10 +635,10 @@ function OrderDialog({ open, onOpenChange, editing, onSaved }: { open: boolean; 
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>{editing ? "Edit Advance Order" : "New Advance Order"}</DialogTitle></DialogHeader>
+        <DialogContent className="w-[95vw] max-w-3xl max-h-[95vh] sm:max-h-[90vh] overflow-hidden rounded-xl p-4 sm:p-6">
+          <DialogHeader className="px-1 sm:px-0"><DialogTitle>{editing ? "Edit Advance Order" : "New Advance Order"}</DialogTitle></DialogHeader>
 
-          <div className="space-y-5">
+          <div className="space-y-5 overflow-y-auto pr-1 -mr-1 max-h-[calc(95vh-8rem)] sm:max-h-[calc(90vh-8rem)]">
           <section className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5"><Label>Customer Name *</Label><Input value={customer} onChange={(e) => setCustomer(e.target.value)} /></div>
             <div className="space-y-1.5"><Label>Mobile Number *</Label><Input value={mobile} onChange={(e) => setMobile(e.target.value)} inputMode="tel" /></div>
@@ -688,8 +688,56 @@ function OrderDialog({ open, onOpenChange, editing, onSaved }: { open: boolean; 
                     </Button>
                   </div>
 
-                  {/* Category Items Table */}
-                  <div className="overflow-x-auto">
+                  {/* Category Items (mobile cards + desktop table) */}
+                  <div className="block sm:hidden space-y-2 p-3">
+                    {categoryItems.map((item: any, idx: number) => {
+                      const actualIdx = item._index;
+                      const total = Number(item.quantity || 0) * Number(item.price_per_unit || 0);
+                      return (
+                        <div key={actualIdx} className="rounded-xl border bg-background p-3 shadow-sm space-y-3">
+                          <div className="flex items-start justify-between gap-2">
+                            <Input
+                              value={item.item_name}
+                              onChange={(e) => updateItem(actualIdx, { item_name: e.target.value })}
+                              placeholder="Item name"
+                              className="h-9 text-sm flex-1"
+                            />
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => removeRow(actualIdx)}
+                              disabled={items.length === 1}
+                              className="h-9 w-9 shrink-0"
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div className="space-y-1">
+                              <Label className="text-xs">Qty</Label>
+                              <Input type="number" min={0} value={item.quantity} onChange={(e) => updateItem(actualIdx, { quantity: Number(e.target.value) })} className="h-9 text-sm" />
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-xs">Unit</Label>
+                              <Select value={item.unit} onValueChange={(v) => updateItem(actualIdx, { unit: v })}>
+                                <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                                <SelectContent>{UNITS.map((u) => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent>
+                              </Select>
+                            </div>
+                            <div className="space-y-1 col-span-2">
+                              <Label className="text-xs">Price / Unit</Label>
+                              <Input type="number" min={0} value={item.price_per_unit} onChange={(e) => updateItem(actualIdx, { price_per_unit: Number(e.target.value) })} className="h-9 text-sm" />
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-muted-foreground">Total</span>
+                            <span className="font-semibold">{formatINR(total)}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="hidden sm:block overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="border-b bg-muted/50">
@@ -784,7 +832,7 @@ function OrderDialog({ open, onOpenChange, editing, onSaved }: { open: boolean; 
             </div>
           </section>
 
-          <section className="grid grid-cols-1 sm:grid-cols-4 gap-3 bg-muted/40 rounded-xl p-4">
+          <section className="grid grid-cols-1 gap-3 sm:grid-cols-4 bg-muted/40 rounded-xl p-4">
             <div>
               <Label className="text-xs">Sub Total</Label>
               <div className="h-9 flex items-center font-semibold">{formatINR(subTotal)}</div>
@@ -804,7 +852,7 @@ function OrderDialog({ open, onOpenChange, editing, onSaved }: { open: boolean; 
           </section>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="sticky bottom-0 z-10 border-t bg-background/95 p-3 -mx-4 -mb-4 sm:static sm:border-0 sm:bg-transparent sm:p-0 sm:mx-0 sm:mb-0">
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>Cancel</Button>
           <Button onClick={save} disabled={saving}>{saving ? "Saving…" : editing ? "Update Order" : "Create Order"}</Button>
         </DialogFooter>
